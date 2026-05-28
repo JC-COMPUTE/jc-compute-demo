@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>JC-JSON-Flow    Distribution & Convergence</title>
+  <title>JSONFlow Production MVP - Distribution & Convergence</title>
   <style>
     :root {
       color-scheme: dark;
@@ -383,7 +383,7 @@
 <main>
   <header>
     <div>
-      <h1>JC-JSON-Flow</h1>
+      <h1>JSONFlow Production MVP</h1>
       <p class="subtitle">A single-file distribution and convergence console: canonical events, real signatures, deterministic message ordering, Merkle state, snapshots, proof receipts, and replay-verifiable replicas.</p>
     </div>
     <div class="badge-row" aria-label="capability highlights">
@@ -555,6 +555,7 @@ class ProductionLedger {
     if (!this.keysReady) throw new Error("keys are not ready");
     const peer = this.peers.get(author);
     if (!peer) throw new Error("unknown author: " + author);
+    const normalizedPayload = normalizeEventPayload(type, payload, author, peer.state);
     const parents = this.heads();
     const parentLamport = parents.reduce((max, id) => Math.max(max, this.events.get(id)?.lamport ?? 0), 0);
     const event = {
@@ -563,7 +564,7 @@ class ProductionLedger {
       authorNode: peer.nodeId,
       capability: "cap:" + author,
       overlay: "ledger",
-      payload: canonicalClone(payload),
+      payload: canonicalClone(normalizedPayload),
       parents,
       lamport: parentLamport + 1,
       epoch: 0
@@ -704,10 +705,11 @@ class ProductionLedger {
 
   async replayFrom(index) {
     let state = createInitialState();
-    const events = this.orderedEvents().slice(index);
+    const safeIndex = clampInteger(index, 0, this.orderedEvents().length);
+    const events = this.orderedEvents().slice(safeIndex);
     for (const event of events) state = reduceState(state, event);
     return {
-      from: index,
+      from: safeIndex,
       events: events.length,
       state,
       stateRoot: await stateRoot(state),
@@ -760,24 +762,25 @@ function createInitialState() {
 
 function reduceState(state, event) {
   const next = canonicalClone(state);
+  const payload = normalizeEventPayload(event.type, event.payload, event.author, next);
   if (event.type === "genesis") {
-    next.values.genesis = event.payload.note;
+    next.values.genesis = payload.note;
   } else if (event.type === "transfer") {
-    const { from, to, amount } = event.payload;
+    const { from, to, amount } = payload;
     requireString(from, "payload.from");
     requireString(to, "payload.to");
-    requireSafePositiveInteger(amount, "payload.amount");
+    requireSafeNonNegativeInteger(amount, "payload.amount");
     if (!(from in next.balances) || !(to in next.balances)) throw new Error("unknown account");
     if (next.balances[from] < amount) throw new Error("insufficient balance");
     next.balances[from] -= amount;
     next.balances[to] += amount;
   } else if (event.type === "set_value") {
-    const { key, value } = event.payload;
+    const { key, value } = payload;
     requireString(key, "payload.key");
     assertCanonical(value);
     next.values[key] = value;
   } else if (event.type === "increment") {
-    const { counter, by } = event.payload;
+    const { counter, by } = payload;
     requireString(counter, "payload.counter");
     requireSafePositiveInteger(by, "payload.by");
     next.counters[counter] = (next.counters[counter] ?? 0) + by;
@@ -921,12 +924,114 @@ function assertCanonical(value) {
   canonicalize(value);
 }
 
+function parseCustomPayload(raw) {
+  const text = String(raw ?? "").trim();
+  if (text.length === 0) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
+
+function normalizeEventPayload(type, payload, author, state) {
+  const safe = toCanonicalSafe(payload);
+  if (type === "genesis") {
+    const note = isPlainObject(safe) && "note" in safe ? safe.note : safe;
+    return { note: stringifyField(note, "JSONFlow production MVP genesis") };
+  }
+  if (type === "transfer") {
+    const source = isPlainObject(safe) ? safe : {};
+    const balances = state?.balances ?? createInitialState().balances;
+    let from = accountOrFallback(source.from, balances, author in balances ? author : Object.keys(balances)[0]);
+    let to = accountOrFallback(source.to, balances, firstOtherAccount(balances, from));
+    if (from === to) to = firstOtherAccount(balances, from);
+    if (!(from in balances)) from = Object.keys(balances)[0];
+    if (!(to in balances)) to = firstOtherAccount(balances, from);
+    const available = Math.max(0, balances[from] ?? 0);
+    const requested = integerFrom(source.amount ?? source.value ?? source.by ?? 1, 1);
+    return { from, to, amount: clampInteger(requested, available > 0 ? 1 : 0, available) };
+  }
+  if (type === "increment") {
+    const source = isPlainObject(safe) ? safe : { counter: safe };
+    return {
+      counter: keyField(source.counter ?? source.key ?? "custom_counter", "custom_counter"),
+      by: clampInteger(integerFrom(source.by ?? source.amount ?? source.value ?? 1, 1), 1, 1000000)
+    };
+  }
+  if (type === "set_value") {
+    const source = isPlainObject(safe) ? safe : { value: safe };
+    return {
+      key: keyField(source.key ?? source.name ?? "custom_value", "custom_value"),
+      value: "value" in source ? toCanonicalSafe(source.value) : safe
+    };
+  }
+  return { value: safe };
+}
+
+function toCanonicalSafe(value, depth = 0) {
+  if (depth > 24) return "[max-depth]";
+  if (value === null || typeof value === "boolean" || typeof value === "string") return value;
+  if (typeof value === "number") return Number.isFinite(value) ? clampInteger(value, -Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER) : 0;
+  if (Array.isArray(value)) return value.slice(0, 200).map((item) => toCanonicalSafe(item, depth + 1));
+  if (isPlainObject(value)) {
+    const output = {};
+    for (const [key, nested] of Object.entries(value).slice(0, 200)) {
+      output[keyField(key, "field")] = toCanonicalSafe(nested, depth + 1);
+    }
+    return output;
+  }
+  return String(value);
+}
+
+function isPlainObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function accountOrFallback(value, balances, fallback) {
+  const account = String(value ?? "").trim();
+  return account in balances ? account : fallback;
+}
+
+function firstOtherAccount(balances, account) {
+  return Object.keys(balances).find((candidate) => candidate !== account) ?? Object.keys(balances)[0];
+}
+
+function integerFrom(value, fallback) {
+  const number = typeof value === "number" ? value : Number(String(value ?? "").replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(number) ? Math.trunc(Math.abs(number)) : fallback;
+}
+
+function clampInteger(value, min, max) {
+  const number = Number.isFinite(Number(value)) ? Math.trunc(Number(value)) : min;
+  return Math.min(Math.max(number, min), max);
+}
+
+function stringifyField(value, fallback) {
+  if (typeof value === "string") return value.length > 0 ? value : fallback;
+  try {
+    return JSON.stringify(toCanonicalSafe(value));
+  } catch {
+    return fallback;
+  }
+}
+
+function keyField(value, fallback) {
+  const key = stringifyField(value, fallback).trim().replace(/\s+/g, "_").slice(0, 80);
+  if (["__proto__", "constructor", "prototype"].includes(key)) return fallback;
+  return key.length > 0 ? key : fallback;
+}
+
 function requireString(value, field) {
   if (typeof value !== "string" || value.length === 0) throw new Error(field + " must be a string");
 }
 
 function requireSafePositiveInteger(value, field) {
   if (!Number.isSafeInteger(value) || value <= 0) throw new Error(field + " must be a positive safe integer");
+}
+
+function requireSafeNonNegativeInteger(value, field) {
+  if (!Number.isSafeInteger(value) || value < 0) throw new Error(field + " must be a non-negative safe integer");
 }
 
 function log(type, message) {
@@ -941,15 +1046,7 @@ const appLog = [];
 async function createEventFromForm() {
   const author = document.getElementById("authorPeer").value;
   const type = document.getElementById("eventType").value;
-  let payload;
-  try {
-    payload = JSON.parse(document.getElementById("eventPayload").value.trim() || "{}");
-    assertCanonical(payload);
-  } catch (error) {
-    log("error", "Invalid canonical JSON payload: " + String(error.message || error));
-    await render();
-    return;
-  }
+  const payload = parseCustomPayload(document.getElementById("eventPayload").value);
   try {
     await ledger.createEvent(author, type, payload);
   } catch (error) {
@@ -972,12 +1069,21 @@ async function injectInvalidEvent() {
 
 async function replayFromInput() {
   const from = Number(document.getElementById("replayFrom").value || 0);
-  const result = await ledger.replayFrom(from);
-  document.getElementById("replayState").textContent = JSON.stringify(result, null, 2);
+  try {
+    const result = await ledger.replayFrom(from);
+    document.getElementById("replayState").textContent = JSON.stringify(result, null, 2);
+  } catch (error) {
+    log("error", "Replay failed: " + String(error.message || error));
+    await render();
+  }
 }
 
 async function createSnapshotFromUi() {
-  await ledger.createSnapshot();
+  try {
+    await ledger.createSnapshot();
+  } catch (error) {
+    log("error", "Snapshot failed: " + String(error.message || error));
+  }
   await render();
 }
 
@@ -1125,4 +1231,3 @@ ledger.init().then(render).catch((error) => {
 </script>
 </body>
 </html>
-
