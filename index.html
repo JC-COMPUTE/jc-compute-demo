@@ -870,152 +870,301 @@
     </footer>
 
     <script>
-        let state = {
-            alice: { balance: 1000, followers: 100, posts: 5 },
-            bob: { balance: 800, followers: 80, posts: 3 },
-            charlie: { balance: 1200, followers: 150, posts: 8 }
-        };
-
+        // ===== State Management =====
+        let state = null;
         let events = [];
         let currentPhase = 0;
 
+        // Helper to safely get elements
+        function getEl(id) {
+            const el = document.getElementById(id);
+            if (!el) console.warn(`Element not found: ${id}`);
+            return el;
+        }
+
+        // ===== Logging =====
         function log(message, type = 'info') {
-            const now = new Date().toLocaleTimeString();
-            const el = document.createElement('div');
-            el.className = `event-item ${type === 'success' ? 'success' : type === 'error' ? 'error' : ''}`;
-            el.innerHTML = `<span class="event-time">${now}</span> ${message}`;
-            
-            const log = document.getElementById('event-log');
-            if (log.children[0].textContent === 'Ready for events...') {
-                log.innerHTML = '';
+            try {
+                const now = new Date().toLocaleTimeString();
+                const el = document.createElement('div');
+                el.className = `event-item ${type === 'success' ? 'success' : type === 'error' ? 'error' : ''}`;
+                el.innerHTML = `<span class="event-time">${now}</span> ${message}`;
+                
+                const logEl = getEl('event-log');
+                if (!logEl) return;
+
+                // Clear placeholder on first real event
+                if (logEl.children.length === 1) {
+                    const firstChild = logEl.children[0];
+                    if (firstChild && firstChild.textContent.includes('Ready')) {
+                        logEl.innerHTML = '';
+                    }
+                }
+
+                logEl.appendChild(el);
+                logEl.scrollTop = logEl.scrollHeight;
+            } catch (err) {
+                console.error('Log error:', err);
             }
-            log.appendChild(el);
-            log.scrollTop = log.scrollHeight;
         }
 
+        // ===== Display Update =====
         function updateDisplay() {
-            ['alice', 'bob', 'charlie'].forEach(user => {
-                document.getElementById(`${user}-balance`).textContent = `$${state[user].balance}`;
-                document.getElementById(`${user}-followers`).textContent = state[user].followers;
-                document.getElementById(`${user}-posts`).textContent = state[user].posts;
-                document.getElementById(`${user}-total`).textContent = `$${state[user].balance}`;
-            });
+            if (!state) return;
+
+            try {
+                ['alice', 'bob', 'charlie'].forEach(user => {
+                    const userData = state[user];
+                    if (!userData) return;
+
+                    const balEl = getEl(`${user}-balance`);
+                    const follEl = getEl(`${user}-followers`);
+                    const postEl = getEl(`${user}-posts`);
+                    const totalEl = getEl(`${user}-total`);
+
+                    if (balEl) balEl.textContent = `$${userData.balance}`;
+                    if (follEl) follEl.textContent = userData.followers;
+                    if (postEl) postEl.textContent = userData.posts;
+                    if (totalEl) totalEl.textContent = `$${userData.balance}`;
+                });
+            } catch (err) {
+                console.error('Display update error:', err);
+            }
         }
 
-        function runDemo(phase) {
-            const phases = {
-                phase1: () => {
-                    currentPhase = 1;
-                    state = { alice: { balance: 1000, followers: 100, posts: 5 }, bob: { balance: 800, followers: 80, posts: 3 }, charlie: { balance: 1200, followers: 150, posts: 8 } };
-                    events = [];
-                    document.getElementById('event-log').innerHTML = '';
-                    ['alice', 'bob', 'charlie'].forEach(u => {
-                        document.getElementById(`${u}-node`).classList.remove('partitioned', 'converged');
-                        document.getElementById(`${u}-node`).classList.add('active');
-                    });
+        // ===== Demo Phases =====
+        function initPhase() {
+            try {
+                currentPhase = 1;
+                state = {
+                    alice: { balance: 1000, followers: 100, posts: 5 },
+                    bob: { balance: 800, followers: 80, posts: 3 },
+                    charlie: { balance: 1200, followers: 150, posts: 8 }
+                };
+                events = [];
+
+                const logEl = getEl('event-log');
+                if (logEl) logEl.innerHTML = '';
+
+                ['alice', 'bob', 'charlie'].forEach(u => {
+                    const node = getEl(`${u}-node`);
+                    if (node) {
+                        node.classList.remove('partitioned', 'converged');
+                        node.classList.add('active');
+                    }
+                });
+
+                updateDisplay();
+                log('✓ Network initialized. All nodes online.', 'success');
+                const total = state.alice.balance + state.bob.balance + state.charlie.balance;
+                log(`Initial total: $${total}`, 'info');
+            } catch (err) {
+                console.error('Init phase error:', err);
+            }
+        }
+
+        function phase2() {
+            try {
+                if (currentPhase < 1) {
+                    log('⚠️ Run phase 1 first!', 'error');
+                    return;
+                }
+                currentPhase = 2;
+                log('🏦 Banking transfers executing...', 'info');
+
+                setTimeout(() => {
+                    if (!state) return;
+                    state.alice.balance -= 200;
+                    state.bob.balance += 200;
+                    events.push('transfer(alice → bob, $200)');
+                    log('✓ Alice sends Bob $200', 'success');
                     updateDisplay();
-                    log('✓ Network initialized. All nodes online.', 'success');
-                    log('Initial total: $' + (state.alice.balance + state.bob.balance + state.charlie.balance));
-                },
-                phase2: () => {
-                    if (currentPhase < 1) return;
-                    currentPhase = 2;
-                    log('🏦 Banking transfers executing...', 'info');
-                    setTimeout(() => {
-                        state.alice.balance -= 200;
-                        state.bob.balance += 200;
-                        events.push('transfer(alice → bob, $200)');
-                        log('Alice sends Bob $200', 'success');
-                        updateDisplay();
-                    }, 300);
-                    setTimeout(() => {
-                        state.bob.balance -= 300;
-                        state.charlie.balance += 300;
-                        events.push('transfer(bob → charlie, $300)');
-                        log('Bob sends Charlie $300', 'success');
-                        updateDisplay();
-                    }, 600);
-                },
-                phase3: () => {
-                    if (currentPhase < 2) return;
-                    currentPhase = 3;
-                    log('📱 Social events executing...', 'info');
-                    setTimeout(() => {
-                        state.alice.posts += 1;
-                        state.alice.followers += 50;
-                        events.push('post(alice, "Great content!")');
-                        events.push('follow(alice, +50)');
-                        log('Alice posts great content, gains 50 followers', 'success');
-                        updateDisplay();
-                    }, 300);
-                },
-                phase4: () => {
-                    if (currentPhase < 3) return;
-                    currentPhase = 4;
-                    log('⚠️ NETWORK PARTITION! Regions isolated.', 'error');
-                    document.getElementById('alice-node').classList.add('partitioned');
-                    document.getElementById('bob-node').classList.add('partitioned');
-                    document.getElementById('charlie-node').classList.add('partitioned');
-                },
-                phase5: () => {
-                    if (currentPhase < 4) return;
-                    currentPhase = 5;
-                    log('🌐 Connectivity restored...', 'success');
-                    log('Exchanging event logs...', 'info');
-                    setTimeout(() => {
-                        log('All nodes received complete event history', 'success');
-                    }, 500);
-                },
-                phase6: () => {
-                    if (currentPhase < 5) return;
-                    currentPhase = 6;
-                    log('🔄 Running deterministic reducers...', 'info');
-                    setTimeout(() => {
-                        document.getElementById('alice-node').classList.remove('partitioned');
-                        document.getElementById('bob-node').classList.remove('partitioned');
-                        document.getElementById('charlie-node').classList.remove('partitioned');
-                        
-                        document.getElementById('alice-node').classList.add('converged');
-                        document.getElementById('bob-node').classList.add('converged');
-                        document.getElementById('charlie-node').classList.add('converged');
-                        
-                        log('✓ PERFECT CONVERGENCE! All nodes identical.', 'success');
-                        
-                        const total = state.alice.balance + state.bob.balance + state.charlie.balance;
-                        log(`Final balances: Alice=$${state.alice.balance}, Bob=$${state.bob.balance}, Charlie=$${state.charlie.balance}`, 'success');
-                        log(`Total conserved: $${total}`, 'success');
-                        
-                        const msg = document.getElementById('convergence-msg');
-                        msg.classList.add('show');
-                        document.getElementById('convergence-details').innerHTML = `
+                }, 300);
+
+                setTimeout(() => {
+                    if (!state) return;
+                    state.bob.balance -= 300;
+                    state.charlie.balance += 300;
+                    events.push('transfer(bob → charlie, $300)');
+                    log('✓ Bob sends Charlie $300', 'success');
+                    updateDisplay();
+                }, 600);
+            } catch (err) {
+                console.error('Phase 2 error:', err);
+            }
+        }
+
+        function phase3() {
+            try {
+                if (currentPhase < 2) {
+                    log('⚠️ Run phase 2 first!', 'error');
+                    return;
+                }
+                currentPhase = 3;
+                log('📱 Social events executing...', 'info');
+
+                setTimeout(() => {
+                    if (!state) return;
+                    state.alice.posts += 1;
+                    state.alice.followers += 50;
+                    events.push('post(alice, "Great content!")');
+                    events.push('follow(alice, +50)');
+                    log('✓ Alice posts great content, gains 50 followers', 'success');
+                    updateDisplay();
+                }, 300);
+            } catch (err) {
+                console.error('Phase 3 error:', err);
+            }
+        }
+
+        function phase4() {
+            try {
+                if (currentPhase < 3) {
+                    log('⚠️ Run phase 3 first!', 'error');
+                    return;
+                }
+                currentPhase = 4;
+                log('⚠️ NETWORK PARTITION! Regions isolated.', 'error');
+
+                ['alice', 'bob', 'charlie'].forEach(u => {
+                    const node = getEl(`${u}-node`);
+                    if (node) node.classList.add('partitioned');
+                });
+            } catch (err) {
+                console.error('Phase 4 error:', err);
+            }
+        }
+
+        function phase5() {
+            try {
+                if (currentPhase < 4) {
+                    log('⚠️ Run phase 4 first!', 'error');
+                    return;
+                }
+                currentPhase = 5;
+                log('🌐 Connectivity restored...', 'success');
+                log('Exchanging event logs...', 'info');
+
+                setTimeout(() => {
+                    log('✓ All nodes received complete event history', 'success');
+                }, 500);
+            } catch (err) {
+                console.error('Phase 5 error:', err);
+            }
+        }
+
+        function phase6() {
+            try {
+                if (currentPhase < 5) {
+                    log('⚠️ Run phase 5 first!', 'error');
+                    return;
+                }
+                if (!state) return;
+
+                currentPhase = 6;
+                log('🔄 Running deterministic reducers on all nodes...', 'info');
+
+                setTimeout(() => {
+                    // Remove partition state
+                    ['alice', 'bob', 'charlie'].forEach(u => {
+                        const node = getEl(`${u}-node`);
+                        if (node) {
+                            node.classList.remove('partitioned');
+                            node.classList.add('converged');
+                        }
+                    });
+
+                    log('✓ PERFECT CONVERGENCE! All nodes computed identical state.', 'success');
+
+                    const total = state.alice.balance + state.bob.balance + state.charlie.balance;
+                    log(`Final balances: Alice=$${state.alice.balance}, Bob=$${state.bob.balance}, Charlie=$${state.charlie.balance}`, 'success');
+                    log(`Total conserved: $${total}`, 'success');
+
+                    const msgEl = getEl('convergence-msg');
+                    const detailsEl = getEl('convergence-details');
+
+                    if (msgEl && detailsEl) {
+                        detailsEl.innerHTML = `
                             Alice: balance=$${state.alice.balance}, followers=${state.alice.followers}, posts=${state.alice.posts}<br/>
                             Bob: balance=$${state.bob.balance}, followers=${state.bob.followers}, posts=${state.bob.posts}<br/>
                             Charlie: balance=$${state.charlie.balance}, followers=${state.charlie.followers}, posts=${state.charlie.posts}<br/>
                             <br/>
                             <strong>Total: $${total}</strong> (No double-spend, no lost funds ✓)
                         `;
-                    }, 600);
-                }
+                        msgEl.classList.add('show');
+                    }
+                }, 600);
+            } catch (err) {
+                console.error('Phase 6 error:', err);
+            }
+        }
+
+        // ===== Main Demo Runner =====
+        function runDemo(phase) {
+            const phaseMap = {
+                'phase1': initPhase,
+                'phase2': phase2,
+                'phase3': phase3,
+                'phase4': phase4,
+                'phase5': phase5,
+                'phase6': phase6
             };
 
-            if (phases[phase]) phases[phase]();
+            if (phaseMap[phase]) {
+                phaseMap[phase]();
+            } else {
+                console.error(`Unknown phase: ${phase}`);
+            }
         }
 
+        // ===== Reset =====
         function resetDemo() {
-            currentPhase = 0;
-            state = { alice: { balance: 1000, followers: 100, posts: 5 }, bob: { balance: 800, followers: 80, posts: 3 }, charlie: { balance: 1200, followers: 150, posts: 8 } };
-            events = [];
-            document.getElementById('event-log').innerHTML = '<div class="event-item" style="opacity: 0.5;">Ready for events...</div>';
-            document.getElementById('convergence-msg').classList.remove('show');
-            ['alice', 'bob', 'charlie'].forEach(u => {
-                document.getElementById(`${u}-node`).classList.remove('partitioned', 'converged', 'active');
-            });
-            updateDisplay();
+            try {
+                currentPhase = 0;
+                state = {
+                    alice: { balance: 1000, followers: 100, posts: 5 },
+                    bob: { balance: 800, followers: 80, posts: 3 },
+                    charlie: { balance: 1200, followers: 150, posts: 8 }
+                };
+                events = [];
+
+                const logEl = getEl('event-log');
+                if (logEl) {
+                    logEl.innerHTML = '<div class="event-item" style="opacity: 0.5;">Ready for events...</div>';
+                }
+
+                const convEl = getEl('convergence-msg');
+                if (convEl) {
+                    convEl.classList.remove('show');
+                }
+
+                ['alice', 'bob', 'charlie'].forEach(u => {
+                    const node = getEl(`${u}-node`);
+                    if (node) {
+                        node.classList.remove('partitioned', 'converged', 'active');
+                    }
+                });
+
+                updateDisplay();
+                log('Demo reset. Ready to start again.', 'info');
+            } catch (err) {
+                console.error('Reset error:', err);
+            }
         }
 
-        // Initialize on load
-        window.addEventListener('load', () => {
-            updateDisplay();
+        // ===== Initialization =====
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                state = {
+                    alice: { balance: 1000, followers: 100, posts: 5 },
+                    bob: { balance: 800, followers: 80, posts: 3 },
+                    charlie: { balance: 1200, followers: 150, posts: 8 }
+                };
+                updateDisplay();
+                console.log('Demo initialized successfully');
+            } catch (err) {
+                console.error('Initialization error:', err);
+            }
         });
     </script>
 </body>
