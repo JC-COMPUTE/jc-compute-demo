@@ -1,263 +1,1128 @@
-<!DOCTYPE html>
+
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JC-Compute V2 • Temporal Manifold</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'IBM Plex Mono', monospace; }
-        .manifold { font-family: 'IBM Plex Mono', monospace; }
-        .node-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .event-node { transition: all 0.2s; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JC-JSON-Flow    Distribution & Convergence</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090d13;
+      --panel: #111822;
+      --panel-2: #151f2c;
+      --line: #2a394a;
+      --text: #e8f1f8;
+      --muted: #9fb0c2;
+      --blue: #38bdf8;
+      --cyan: #22d3ee;
+      --green: #22c55e;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --violet: #a78bfa;
+      --shadow: 0 18px 70px rgba(0, 0, 0, 0.34);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 16% 4%, rgba(56, 189, 248, 0.16), transparent 32rem),
+        radial-gradient(circle at 86% 10%, rgba(34, 197, 94, 0.10), transparent 30rem),
+        linear-gradient(135deg, #08111d 0%, #111827 54%, #071018 100%);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(1480px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 24px 0 34px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 22px;
+      align-items: end;
+      margin-bottom: 22px;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+
+    h1 {
+      font-size: clamp(2rem, 4vw, 4rem);
+      line-height: 0.95;
+      letter-spacing: 0;
+      background: linear-gradient(135deg, #e8f1f8 0%, #38bdf8 45%, #22c55e 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .subtitle {
+      max-width: 820px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 1.04rem;
+      line-height: 1.5;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      max-width: 580px;
+    }
+
+    .badge {
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      background: rgba(56, 189, 248, 0.08);
+      color: #d7f3ff;
+      border-radius: 999px;
+      padding: 8px 11px;
+      font-size: 0.8rem;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015)), var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .panel h2 {
+      color: #dff7ff;
+      font-size: 1.1rem;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .stack { display: grid; gap: 18px; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 180px 220px minmax(0, 1fr);
+      gap: 12px;
+      align-items: end;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 760;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #0b111a;
+      color: var(--text);
+      font: inherit;
+      padding: 10px 11px;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 84px;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.88rem;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    button {
+      min-height: 40px;
+      border: 0;
+      border-radius: 7px;
+      padding: 0 14px;
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      color: #06111a;
+      font-weight: 850;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    button.secondary {
+      color: var(--text);
+      background: #1b2634;
+      border: 1px solid var(--line);
+    }
+
+    button.warn {
+      color: #160d01;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    }
+
+    button.danger {
+      color: #fff;
+      background: linear-gradient(135deg, #f87171, #dc2626);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: progress;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      min-height: 92px;
+      display: grid;
+      align-content: center;
+      gap: 6px;
+      background: #0c131d;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 0.73rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      color: var(--blue);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: clamp(1.35rem, 2vw, 1.9rem);
+      overflow-wrap: anywhere;
+    }
+
+    .peer-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .peer-card {
+      background: #0c131d;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 13px;
+    }
+
+    .peer-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--text);
+      font-weight: 850;
+      margin-bottom: 11px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 18px rgba(34, 197, 94, 0.55);
+    }
+
+    .dot.bad { background: var(--red); box-shadow: 0 0 18px rgba(239, 68, 68, 0.55); }
+
+    .kv {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 7px 0;
+      border-top: 1px solid rgba(42, 57, 74, 0.72);
+      font-size: 0.84rem;
+    }
+
+    .kv span { color: var(--muted); }
+    .kv strong {
+      color: #dff7ff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    .convergence {
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: 8px;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.42);
+      color: #c9f8d8;
+    }
+
+    .convergence.bad {
+      background: rgba(239, 68, 68, 0.09);
+      border-color: rgba(239, 68, 68, 0.44);
+      color: #ffd7d7;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .tab-button {
+      color: var(--muted);
+      background: transparent;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      border-radius: 0;
+      min-height: 42px;
+      padding: 0 10px;
+    }
+
+    .tab-button.active {
+      color: var(--blue);
+      border-bottom-color: var(--blue);
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: grid; gap: 12px; }
+
+    pre, .log {
+      margin: 0;
+      padding: 13px;
+      background: #070c12;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: #b8f8d2;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow: auto;
+      max-height: 470px;
+      overflow-wrap: anywhere;
+    }
+
+    .log {
+      display: grid;
+      gap: 8px;
+      color: var(--text);
+    }
+
+    .log-row {
+      border-left: 3px solid var(--blue);
+      background: #0d141e;
+      border-radius: 5px;
+      padding: 8px 9px;
+    }
+
+    .log-row.event { border-left-color: var(--green); }
+    .log-row.sync { border-left-color: var(--amber); }
+    .log-row.proof { border-left-color: var(--violet); }
+    .log-row.error { border-left-color: var(--red); }
+    .log-row strong { color: var(--text); }
+    .log-row small { color: var(--muted); display: block; margin-bottom: 3px; }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .feature {
+      background: #0c131d;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 118px;
+    }
+
+    .feature strong { display: block; color: #dff7ff; margin-bottom: 7px; }
+    .feature p { color: var(--muted); font-size: 0.84rem; line-height: 1.4; }
+
+    @media (max-width: 1120px) {
+      header, .grid { grid-template-columns: 1fr; }
+      .badge-row { justify-content: flex-start; }
+      .form-grid, .peer-grid, .feature-grid, .metrics { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 680px) {
+      .form-grid, .peer-grid, .feature-grid, .metrics { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
-<body class="bg-zinc-950 text-zinc-200">
-    <div class="max-w-7xl mx-auto p-6">
-        <div class="flex justify-between items-center mb-8">
-            <div>
-                <h1 class="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-pink-500 bg-clip-text text-transparent">
-                    JC-COMPUTE V2
-                </h1>
-                <p class="text-zinc-400">Temporal Manifold • Proof of Convergence</p>
-            </div>
-            <div class="flex gap-3">
-                <button onclick="runFullDemo()" class="px-6 py-3 bg-gradient-to-r from-pink-500 to-violet-500 rounded-xl font-semibold hover:scale-105 transition">
-                    ▶ Run Full Demo
-                </button>
-                <button onclick="resetDemo()" class="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-xl font-semibold transition">
-                    Reset
-                </button>
-            </div>
-        </div>
-
-        <!-- Status -->
-        <div class="grid grid-cols-4 gap-4 mb-8" id="status-grid"></div>
-
-        <!-- Nodes -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" id="nodes"></div>
-
-        <!-- Controls -->
-        <div class="mt-10 bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-            <h2 class="text-xl font-semibold mb-4">Manifold Controls</h2>
-            <div class="flex flex-wrap gap-3" id="controls"></div>
-        </div>
-
-        <!-- Global Manifold Graph -->
-        <div class="mt-10">
-            <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                <span class="text-cyan-400">⟡</span> Global Causal Manifold
-            </h2>
-            <div id="global-graph" class="bg-zinc-900 border border-zinc-800 rounded-2xl h-96 flex items-center justify-center text-zinc-500">
-                (Graph visualization will appear here)
-            </div>
-        </div>
-
-        <!-- Invariants -->
-        <div class="mt-10 bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-            <h2 class="text-xl font-semibold mb-4">TLA+ Invariants • Live Verification</h2>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4" id="invariants"></div>
-        </div>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>JSONFlow Production MVP</h1>
+      <p class="subtitle">A single-file distribution and convergence console: canonical events, real signatures, deterministic message ordering, Merkle state, snapshots, proof receipts, and replay-verifiable replicas.</p>
     </div>
+    <div class="badge-row" aria-label="capability highlights">
+      <span class="badge">No mock cryptography</span>
+      <span class="badge">No reducer clocks</span>
+      <span class="badge">No random demo events</span>
+      <span class="badge">Canonical SHA-256</span>
+      <span class="badge">Proof receipts</span>
+    </div>
+  </header>
 
-    <script>
-        // ============== CORE MODEL ==============
-        class TemporalNode {
-            constructor(id) {
-                this.id = id;
-                this.events = new Map(); // eventId → event
-                this.frontier = new Set();
-                this.density = 0;
-                this.emergentTime = 0;
-                this.densityVector = { n1: 0, n2: 0, n3: 0 };
-            }
+  <section class="panel" style="margin-bottom:18px;">
+    <h2>How far ahead this is</h2>
+    <div class="feature-grid">
+      <div class="feature"><strong>Replay is the source of truth</strong><p>Every replica rebuilds state from signed canonical events and independently derives the same root.</p></div>
+      <div class="feature"><strong>Network order is canonical</strong><p>Messages drain by lamport, sender, receiver, type, and hash. Arrival order cannot change state.</p></div>
+      <div class="feature"><strong>State sync is segmentable</strong><p>Merkle roots expose global and per-domain commitments for fast sync and partial verification.</p></div>
+      <div class="feature"><strong>Receipts carry proof material</strong><p>Each transition records event hash, pre-state, post-state, capability, and reducer identity.</p></div>
+    </div>
+  </section>
 
-            addEvent(eventId, parents = [], densityDelta = 1) {
-                const maxParentTime = parents.reduce((max, p) => {
-                    return Math.max(max, this.events.get(p)?.localTime || 0);
-                }, 0);
+  <div class="grid">
+    <section class="stack">
+      <section class="panel">
+        <h2>Create Signed Event</h2>
+        <div class="form-grid">
+          <label>Author
+            <select id="authorPeer">
+              <option value="alice">alice</option>
+              <option value="bob">bob</option>
+              <option value="charlie">charlie</option>
+            </select>
+          </label>
+          <label>Event Type
+            <select id="eventType">
+              <option value="transfer">transfer credit</option>
+              <option value="set_value">set value</option>
+              <option value="increment">increment counter</option>
+            </select>
+          </label>
+          <label>Payload
+            <textarea id="eventPayload">{"from":"alice","to":"bob","amount":100}</textarea>
+          </label>
+        </div>
+        <div class="button-row">
+          <button id="broadcastBtn" type="button">Broadcast Signed Event</button>
+          <button id="scenarioBtn" class="secondary" type="button">Run Deterministic Scenario</button>
+          <button id="attackBtn" class="warn" type="button">Inject Invalid Event</button>
+        </div>
+      </section>
 
-                const newEvent = {
-                    id: eventId,
-                    parents: [...parents],
-                    depth: parents.length ? 1 + Math.max(...parents.map(p => this.events.get(p)?.depth || 0)) : 0,
-                    densityAt: this.density + densityDelta,
-                    localTime: maxParentTime + densityDelta
-                };
+      <section class="panel">
+        <h2>System Metrics</h2>
+        <div class="metrics">
+          <div class="metric"><span>Total events</span><strong id="totalEvents">0</strong></div>
+          <div class="metric"><span>Distribution</span><strong id="syncPercentage">0%</strong></div>
+          <div class="metric"><span>Consensus</span><strong id="convergenceStatus">-</strong></div>
+          <div class="metric"><span>Causal depth</span><strong id="chainDepth">0</strong></div>
+          <div class="metric"><span>Merkle root</span><strong id="merkleMetric">-</strong></div>
+          <div class="metric"><span>Proof receipts</span><strong id="receiptCount">0</strong></div>
+          <div class="metric"><span>Snapshots</span><strong id="snapshotCount">0</strong></div>
+          <div class="metric"><span>Rejected attacks</span><strong id="rejectedCount">0</strong></div>
+        </div>
+      </section>
 
-                this.events.set(eventId, newEvent);
-                this.frontier = new Set([eventId]);
-                this.density = newEvent.densityAt;
-                this.emergentTime = newEvent.localTime;
-                this.densityVector[this.id] = this.density;
+      <section class="panel">
+        <h2>Peer Network Status</h2>
+        <div class="peer-grid" id="peerStatus"></div>
+        <div id="convergenceIndicator" class="convergence">All replicas converged.</div>
+      </section>
+    </section>
 
-                return newEvent;
-            }
+    <section class="stack">
+      <section class="panel">
+        <div class="tabs">
+          <button class="tab-button active" type="button" data-tab="logs">Event Log</button>
+          <button class="tab-button" type="button" data-tab="state">Global State</button>
+          <button class="tab-button" type="button" data-tab="proofs">Proof Receipts</button>
+          <button class="tab-button" type="button" data-tab="replay">Replay</button>
+        </div>
+        <div id="logs" class="tab-content active"><div class="log" id="eventLog"></div></div>
+        <div id="state" class="tab-content">
+          <pre id="stateView">Waiting for genesis...</pre>
+          <pre id="stateRoot">state root pending</pre>
+        </div>
+        <div id="proofs" class="tab-content">
+          <pre id="proofView">No receipts yet.</pre>
+          <pre id="snapshotView">No snapshot yet.</pre>
+        </div>
+        <div id="replay" class="tab-content">
+          <label>Replay suffix from event index
+            <input id="replayFrom" type="number" min="0" value="0">
+          </label>
+          <div class="button-row">
+            <button id="replayBtn" type="button">Execute Replay</button>
+            <button id="snapshotBtn" class="secondary" type="button">Create Snapshot</button>
+            <button id="exportBtn" class="secondary" type="button">Export Ledger</button>
+            <button id="resetBtn" class="danger" type="button">Reset</button>
+          </div>
+          <pre id="replayState">Ready.</pre>
+        </div>
+      </section>
+    </section>
+  </div>
+</main>
 
-            mergeFrom(other) {
-                for (let [id, event] of other.events) {
-                    if (!this.events.has(id)) {
-                        this.events.set(id, {...event});
-                    }
-                }
-                // Merge density vectors (max)
-                Object.keys(this.densityVector).forEach(k => {
-                    this.densityVector[k] = Math.max(this.densityVector[k], other.densityVector[k] || 0);
-                });
-                this.emergentTime = Math.max(this.emergentTime, other.emergentTime);
-                this.density = Math.max(this.density, other.density);
-            }
-        }
+<script>
+"use strict";
 
-        // ============== STATE ==============
-        let nodes = {};
-        const nodeIds = ['n1', 'n2', 'n3'];
+const peerIds = ["alice", "bob", "charlie"];
+const encoder = new TextEncoder();
+const zeroHash = "0".repeat(64);
 
-        function initNodes() {
-            nodes = {};
-            nodeIds.forEach(id => nodes[id] = new TemporalNode(id));
-        }
+let logSeq = 0;
+let rejectedAttacks = 0;
+let deterministicScenarioCursor = 0;
 
-        // ============== RENDERING ==============
-        function render() {
-            renderStatus();
-            renderNodes();
-            renderInvariants();
-        }
+const scenario = [
+  ["alice", "transfer", { from: "alice", to: "bob", amount: 125 }],
+  ["bob", "increment", { counter: "verified_replays", by: 1 }],
+  ["charlie", "set_value", { key: "claim", value: "Convergence is computed, not asserted." }],
+  ["alice", "increment", { counter: "proof_receipts", by: 3 }],
+  ["bob", "transfer", { from: "bob", to: "charlie", amount: 40 }]
+];
 
-        function renderStatus() {
-            const container = document.getElementById('status-grid');
-            container.innerHTML = nodeIds.map(id => {
-                const n = nodes[id];
-                return `
-                    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-                        <div class="flex justify-between">
-                            <div class="font-semibold text-cyan-400">${id.toUpperCase()}</div>
-                            <div class="text-xs px-2 py-1 bg-zinc-800 rounded">t = ${n.emergentTime}</div>
-                        </div>
-                        <div class="text-3xl font-bold mt-2">${n.density}</div>
-                        <div class="text-xs text-zinc-500">CAUSAL DENSITY ρ</div>
-                    </div>
-                `;
-            }).join('');
-        }
+class ProductionLedger {
+  constructor() {
+    this.peers = new Map();
+    this.messages = [];
+    this.events = new Map();
+    this.snapshots = [];
+    this.keysReady = false;
+  }
 
-        function renderNodes() {
-            const container = document.getElementById('nodes');
-            container.innerHTML = nodeIds.map(id => {
-                const n = nodes[id];
-                const events = Array.from(n.events.values());
-                
-                return `
-                    <div class="node-card bg-zinc-900 border border-zinc-700 hover:border-cyan-400 rounded-2xl p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="text-lg font-semibold">${id.toUpperCase()}</div>
-                            <div class="text-xs px-3 py-1 bg-emerald-950 text-emerald-400 rounded-full">CONNECTED</div>
-                        </div>
-                        
-                        <div class="space-y-3 text-sm">
-                            <div>Events: <span class="font-mono text-cyan-300">${events.length}</span></div>
-                            <div>ρ: <span class="font-mono">${n.density}</span></div>
-                            <div>t: <span class="font-mono text-pink-300">${n.emergentTime}</span></div>
-                        </div>
+  async init() {
+    this.peers.clear();
+    this.messages = [];
+    this.events.clear();
+    this.snapshots = [];
+    for (const id of peerIds) {
+      const keys = await crypto.subtle.generateKey(
+        { name: "ECDSA", namedCurve: "P-256" },
+        true,
+        ["sign", "verify"]
+      );
+      const publicKeyDer = await crypto.subtle.exportKey("spki", keys.publicKey);
+      const nodeId = await sha256Hex(hex(new Uint8Array(publicKeyDer)));
+      this.peers.set(id, {
+        id,
+        nodeId,
+        keys,
+        publicKeyDer: hex(new Uint8Array(publicKeyDer)),
+        inbox: [],
+        events: new Map(),
+        state: createInitialState(),
+        stateRoot: null,
+        merkleRoot: null,
+        segmentRoot: null,
+        receipts: [],
+        synced: true
+      });
+    }
+    this.keysReady = true;
+    log("sync", "Generated real WebCrypto signing keys for alice, bob, charlie.");
+    await this.createEvent("alice", "genesis", { note: "JSONFlow production MVP genesis" });
+  }
 
-                        <div class="mt-4 text-xs max-h-48 overflow-auto manifold border border-zinc-800 rounded p-3 bg-black/30">
-                            ${events.map(e => 
-                                `<div class="event-node py-1 border-l-2 border-cyan-400 pl-2 mb-1">
-                                    <span class="text-zinc-500">${e.id}</span> 
-                                    <span class="text-pink-400">t${e.localTime}</span>
-                                </div>`
-                            ).join('')}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
+  async createEvent(author, type, payload) {
+    if (!this.keysReady) throw new Error("keys are not ready");
+    const peer = this.peers.get(author);
+    if (!peer) throw new Error("unknown author: " + author);
+    const parents = this.heads();
+    const parentLamport = parents.reduce((max, id) => Math.max(max, this.events.get(id)?.lamport ?? 0), 0);
+    const event = {
+      type,
+      author,
+      authorNode: peer.nodeId,
+      capability: "cap:" + author,
+      overlay: "ledger",
+      payload: canonicalClone(payload),
+      parents,
+      lamport: parentLamport + 1,
+      epoch: 0
+    };
+    event.id = await hashEvent(event);
+    event.signature = await signHex(peer.keys.privateKey, event.id);
+    await this.broadcast(event);
+    log("event", "Created " + type + " by " + author + " id=" + event.id.slice(0, 16));
+    await this.drainNetwork();
+    return event;
+  }
 
-        function renderInvariants() {
-            const container = document.getElementById('invariants');
-            const allTimes = Object.values(nodes).every(n => n.emergentTime >= 0);
-            const sameManifolds = Object.values(nodes).every((n, i, arr) => 
-                i === 0 || JSON.stringify([...n.events.keys()]) === JSON.stringify([...arr[0].events.keys()])
-            );
+  async broadcast(event) {
+    for (const peer of this.peers.values()) {
+      const message = {
+        from: event.author,
+        to: peer.id,
+        type: "event",
+        lamport: event.lamport,
+        payload: event
+      };
+      message.id = await hashMessage(message);
+      this.messages.push(message);
+      peer.synced = false;
+    }
+  }
 
-            const invariants = [
-                { name: "Temporal Monotonicity", status: allTimes, desc: "Time never flows backward" },
-                { name: "Density Conservation", status: true, desc: "Merging preserves density" },
-                { name: "Causal Completeness", status: true, desc: "All parents present" },
-                { name: "Admissibility", status: true, desc: "All events witnessed" },
-                { name: "Admissible Convergence", status: sameManifolds, desc: "All nodes agree" }
-            ];
+  async drainNetwork() {
+    const ordered = [...this.messages].sort(compareMessages);
+    this.messages = [];
+    for (const message of ordered) {
+      if (await hashMessage(message) !== message.id) throw new Error("network message hash mismatch");
+      const peer = this.peers.get(message.to);
+      if (!peer) continue;
+      peer.inbox.push(message);
+    }
+    for (const peer of this.peers.values()) {
+      const inbox = [...peer.inbox].sort(compareMessages);
+      peer.inbox = [];
+      for (const message of inbox) {
+        await this.acceptAtPeer(peer, message.payload);
+      }
+      await this.replayPeer(peer);
+    }
+    log("sync", "Drained " + ordered.length + " signed network messages in canonical order.");
+  }
 
-            container.innerHTML = invariants.map(inv => `
-                <div class="flex items-center gap-3 p-4 bg-zinc-950 border ${inv.status ? 'border-emerald-500' : 'border-amber-500'} rounded-xl">
-                    <div class="w-6 h-6 rounded-full flex items-center justify-center ${inv.status ? 'bg-emerald-500 text-black' : 'bg-amber-500 text-black'} font-bold">
-                        ${inv.status ? '✓' : '!' }
-                    </div>
-                    <div>
-                        <div class="font-semibold">${inv.name}</div>
-                        <div class="text-xs text-zinc-500">${inv.desc}</div>
-                    </div>
-                </div>
-            `).join('');
-        }
+  async acceptAtPeer(peer, event) {
+    const author = this.peers.get(event.author);
+    if (!author) throw new Error("unknown event author");
+    if (await hashEvent(event) !== event.id) throw new Error("event hash mismatch");
+    const verified = await verifySignature(author.keys.publicKey, event.id, event.signature);
+    if (!verified) throw new Error("signature rejected for " + event.id.slice(0, 16));
+    for (const parent of event.parents) {
+      if (!this.events.has(parent) && !peer.events.has(parent)) throw new Error("missing parent " + parent);
+    }
+    const parentLamport = event.parents.reduce((max, id) => Math.max(max, this.events.get(id)?.lamport ?? peer.events.get(id)?.lamport ?? 0), 0);
+    if (event.lamport !== parentLamport + 1) throw new Error("invalid lamport for " + event.id.slice(0, 16));
+    if (!capabilityAllows(event)) throw new Error("capability rejected " + event.id.slice(0, 16));
+    peer.events.set(event.id, canonicalClone(event));
+    this.events.set(event.id, canonicalClone(event));
+  }
 
-        // ============== ACTIONS ==============
-        function createEvent(nodeId) {
-            const node = nodes[nodeId];
-            const eventId = `${nodeId}-e${node.events.size + 1}`;
-            const parents = node.events.size > 0 ? [Array.from(node.events.keys()).pop()] : [];
-            node.addEvent(eventId, parents, Math.floor(Math.random()*3) + 1);
-            render();
-        }
+  async replayPeer(peer) {
+    let state = createInitialState();
+    const receipts = [];
+    const ordered = [...peer.events.values()].sort(compareEvents);
+    for (const event of ordered) {
+      const preState = await stateRoot(state);
+      const next = reduceState(state, event);
+      const postState = await stateRoot(next);
+      const proof = {
+        eventId: event.id,
+        eventHash: await hashEvent(event),
+        parentIds: [...event.parents].sort(),
+        capability: event.capability,
+        reducer: "ledger:" + event.type,
+        preState,
+        postState,
+        merkleRoot: (await merkleize(next)).root
+      };
+      const proofHash = await sha256Hex(proof);
+      receipts.push({
+        event: event.id,
+        overlay: event.overlay,
+        executor: peer.id,
+        preState,
+        postState,
+        proof,
+        proofHash
+      });
+      state = next;
+    }
+    const tree = await merkleize(state);
+    peer.state = state;
+    peer.stateRoot = await stateRoot(state);
+    peer.merkleRoot = tree.root;
+    peer.segmentRoot = await segmentRoot(state, "$.balances");
+    peer.receipts = receipts;
+    peer.synced = true;
+  }
 
-        function mergeAll() {
-            // Full gossip
-            const n1 = nodes.n1, n2 = nodes.n2, n3 = nodes.n3;
-            n1.mergeFrom(n2);
-            n1.mergeFrom(n3);
-            n2.mergeFrom(n1);
-            n3.mergeFrom(n1);
-            render();
-        }
+  async injectInvalidEvent() {
+    const valid = await this.createEvent("alice", "increment", { counter: "attack_surface", by: 1 });
+    const bad = canonicalClone(valid);
+    bad.payload.by = 999;
+    rejectedAttacks += 1;
+    try {
+      await this.broadcast(bad);
+      await this.drainNetwork();
+      log("error", "Invalid event was accepted. This should not happen.");
+    } catch (error) {
+      this.messages = [];
+      for (const peer of this.peers.values()) {
+        peer.inbox = [];
+        peer.synced = true;
+      }
+      log("proof", "Rejected tampered event: " + String(error.message || error));
+    }
+  }
 
-        // ============== DEMO ==============
-        async function runFullDemo() {
-            initNodes();
-            render();
+  async createSnapshot() {
+    const peer = this.peers.get("alice");
+    const snapshot = {
+      state: canonicalClone(peer.state),
+      stateRoot: peer.stateRoot,
+      merkleRoot: peer.merkleRoot,
+      height: peer.events.size,
+      lastEvent: this.orderedEvents().at(-1)?.id ?? zeroHash,
+      epoch: 0
+    };
+    const verified = snapshot.stateRoot === await stateRoot(snapshot.state) && snapshot.merkleRoot === (await merkleize(snapshot.state)).root;
+    if (!verified) throw new Error("snapshot commitment failed");
+    this.snapshots.push(snapshot);
+    log("proof", "Created verified snapshot height=" + snapshot.height + " root=" + snapshot.stateRoot.slice(0, 16));
+    return snapshot;
+  }
 
-            // Phase 1: Independent evolution
-            nodes.n1.addEvent('n1-e1', [], 2);
-            await sleep(400);
-            nodes.n2.addEvent('n2-e1', [], 3);
-            await sleep(400);
-            nodes.n3.addEvent('n3-e1', [], 1);
-            render();
+  async replayFrom(index) {
+    let state = createInitialState();
+    const events = this.orderedEvents().slice(index);
+    for (const event of events) state = reduceState(state, event);
+    return {
+      from: index,
+      events: events.length,
+      state,
+      stateRoot: await stateRoot(state),
+      merkleRoot: (await merkleize(state)).root
+    };
+  }
 
-            await sleep(600);
+  orderedEvents() {
+    return [...this.events.values()].sort(compareEvents);
+  }
 
-            // Phase 2: More events
-            nodes.n1.addEvent('n1-e2', ['n1-e1'], 2);
-            nodes.n2.addEvent('n2-e2', ['n2-e1'], 4);
-            render();
+  heads() {
+    const events = this.orderedEvents();
+    if (events.length === 0) return [];
+    const parents = new Set(events.flatMap((event) => event.parents));
+    return events.filter((event) => !parents.has(event.id)).map((event) => event.id).sort();
+  }
 
-            await sleep(800);
-            mergeAll();
-        }
+  converged() {
+    const peers = [...this.peers.values()];
+    if (peers.some((peer) => !peer.synced || !peer.stateRoot)) return false;
+    return peers.every((peer) => peer.stateRoot === peers[0].stateRoot && peer.merkleRoot === peers[0].merkleRoot);
+  }
 
-        function sleep(ms) {
-            return new Promise(r => setTimeout(r, ms));
-        }
+  exportLedger() {
+    return {
+      version: "jsonflow-production-mvp-v1",
+      events: this.orderedEvents(),
+      peers: [...this.peers.values()].map((peer) => ({
+        id: peer.id,
+        nodeId: peer.nodeId,
+        stateRoot: peer.stateRoot,
+        merkleRoot: peer.merkleRoot,
+        eventCount: peer.events.size,
+        receiptCount: peer.receipts.length
+      })),
+      snapshots: this.snapshots
+    };
+  }
+}
 
-        function resetDemo() {
-            initNodes();
-            render();
-        }
+function createInitialState() {
+  return {
+    balances: { alice: 1000, bob: 500, charlie: 300 },
+    counters: {},
+    values: {},
+    eventCount: 0
+  };
+}
 
-        // Init
-        initNodes();
-        render();
-    </script>
+function reduceState(state, event) {
+  const next = canonicalClone(state);
+  if (event.type === "genesis") {
+    next.values.genesis = event.payload.note;
+  } else if (event.type === "transfer") {
+    const { from, to, amount } = event.payload;
+    requireString(from, "payload.from");
+    requireString(to, "payload.to");
+    requireSafePositiveInteger(amount, "payload.amount");
+    if (!(from in next.balances) || !(to in next.balances)) throw new Error("unknown account");
+    if (next.balances[from] < amount) throw new Error("insufficient balance");
+    next.balances[from] -= amount;
+    next.balances[to] += amount;
+  } else if (event.type === "set_value") {
+    const { key, value } = event.payload;
+    requireString(key, "payload.key");
+    assertCanonical(value);
+    next.values[key] = value;
+  } else if (event.type === "increment") {
+    const { counter, by } = event.payload;
+    requireString(counter, "payload.counter");
+    requireSafePositiveInteger(by, "payload.by");
+    next.counters[counter] = (next.counters[counter] ?? 0) + by;
+  } else {
+    throw new Error("unknown reducer type " + event.type);
+  }
+  next.eventCount += 1;
+  return next;
+}
+
+function capabilityAllows(event) {
+  if (event.capability !== "cap:" + event.author) return false;
+  if (!["genesis", "transfer", "set_value", "increment"].includes(event.type)) return false;
+  return event.overlay === "ledger";
+}
+
+function eventMaterial(event) {
+  return {
+    type: event.type,
+    author: event.author,
+    authorNode: event.authorNode,
+    capability: event.capability,
+    overlay: event.overlay,
+    payload: event.payload,
+    parents: [...event.parents].sort(),
+    lamport: event.lamport,
+    epoch: event.epoch
+  };
+}
+
+async function hashEvent(event) {
+  return sha256Hex(eventMaterial(event));
+}
+
+async function hashMessage(message) {
+  return sha256Hex({
+    from: message.from,
+    to: message.to,
+    type: message.type,
+    lamport: message.lamport,
+    payload: message.payload
+  });
+}
+
+function compareEvents(a, b) {
+  return a.lamport - b.lamport || a.overlay.localeCompare(b.overlay) || a.id.localeCompare(b.id);
+}
+
+function compareMessages(a, b) {
+  return a.lamport - b.lamport || a.from.localeCompare(b.from) || a.to.localeCompare(b.to) || a.type.localeCompare(b.type) || a.id.localeCompare(b.id);
+}
+
+async function stateRoot(state) {
+  return sha256Hex(state);
+}
+
+async function merkleize(state) {
+  const leaves = flattenLeaves(state).map(({ path, value }) => ({ path, hash: null, value }));
+  for (const leaf of leaves) leaf.hash = await sha256Hex({ path: leaf.path, value: leaf.value });
+  leaves.sort((a, b) => a.path.localeCompare(b.path));
+  let level = leaves.map((leaf) => leaf.hash);
+  if (level.length === 0) level = [await sha256Hex([])];
+  while (level.length > 1) {
+    const next = [];
+    for (let i = 0; i < level.length; i += 2) {
+      next.push(await sha256Hex({ left: level[i], right: level[i + 1] ?? level[i] }));
+    }
+    level = next;
+  }
+  return { root: level[0], leaves: leaves.map(({ path, hash }) => ({ path, hash })) };
+}
+
+async function segmentRoot(state, prefix) {
+  const tree = await merkleize(state);
+  const leaves = tree.leaves.filter((leaf) => leaf.path === prefix || leaf.path.startsWith(prefix + "."));
+  if (leaves.length === 0) return sha256Hex([]);
+  let level = leaves.map((leaf) => leaf.hash);
+  while (level.length > 1) {
+    const next = [];
+    for (let i = 0; i < level.length; i += 2) next.push(await sha256Hex({ left: level[i], right: level[i + 1] ?? level[i] }));
+    level = next;
+  }
+  return level[0];
+}
+
+function flattenLeaves(value, path = "$") {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return [{ path, value }];
+  const entries = Object.entries(value).sort(([a], [b]) => a.localeCompare(b));
+  if (entries.length === 0) return [{ path, value: {} }];
+  return entries.flatMap(([key, nested]) => flattenLeaves(nested, path + "." + key.replaceAll("\\", "\\\\").replaceAll(".", "\\.")));
+}
+
+function canonicalize(value) {
+  if (value === null) return "null";
+  if (typeof value === "boolean") return value ? "true" : "false";
+  if (typeof value === "string") return JSON.stringify(value);
+  if (typeof value === "number") {
+    if (!Number.isSafeInteger(value) || !Number.isFinite(value) || Object.is(value, -0)) throw new Error("non-canonical number");
+    return String(value);
+  }
+  if (Array.isArray(value)) return "[" + value.map(canonicalize).join(",") + "]";
+  if (typeof value === "object") {
+    const keys = Object.keys(value).sort();
+    return "{" + keys.map((key) => {
+      if (value[key] === undefined) throw new Error("undefined is not canonical");
+      return JSON.stringify(key) + ":" + canonicalize(value[key]);
+    }).join(",") + "}";
+  }
+  throw new Error("unsupported canonical value");
+}
+
+async function sha256Hex(value) {
+  const bytes = encoder.encode(typeof value === "string" ? value : canonicalize(value));
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return hex(new Uint8Array(digest));
+}
+
+async function signHex(privateKey, eventId) {
+  const signature = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, privateKey, encoder.encode(eventId));
+  return hex(new Uint8Array(signature));
+}
+
+async function verifySignature(publicKey, eventId, signatureHex) {
+  return crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, publicKey, fromHex(signatureHex), encoder.encode(eventId));
+}
+
+function hex(bytes) {
+  return [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function fromHex(value) {
+  if (!/^[0-9a-f]*$/i.test(value) || value.length % 2 !== 0) throw new Error("invalid hex");
+  return new Uint8Array(value.match(/../g)?.map((byte) => parseInt(byte, 16)) ?? []);
+}
+
+function canonicalClone(value) {
+  return JSON.parse(canonicalize(value));
+}
+
+function assertCanonical(value) {
+  canonicalize(value);
+}
+
+function requireString(value, field) {
+  if (typeof value !== "string" || value.length === 0) throw new Error(field + " must be a string");
+}
+
+function requireSafePositiveInteger(value, field) {
+  if (!Number.isSafeInteger(value) || value <= 0) throw new Error(field + " must be a positive safe integer");
+}
+
+function log(type, message) {
+  logSeq += 1;
+  appLog.unshift({ seq: logSeq, type, message });
+  if (appLog.length > 120) appLog.pop();
+}
+
+const ledger = new ProductionLedger();
+const appLog = [];
+
+async function createEventFromForm() {
+  const author = document.getElementById("authorPeer").value;
+  const type = document.getElementById("eventType").value;
+  let payload;
+  try {
+    payload = JSON.parse(document.getElementById("eventPayload").value.trim() || "{}");
+    assertCanonical(payload);
+  } catch (error) {
+    log("error", "Invalid canonical JSON payload: " + String(error.message || error));
+    await render();
+    return;
+  }
+  try {
+    await ledger.createEvent(author, type, payload);
+  } catch (error) {
+    log("error", String(error.message || error));
+  }
+  await render();
+}
+
+async function runScenario() {
+  const item = scenario[deterministicScenarioCursor % scenario.length];
+  deterministicScenarioCursor += 1;
+  await ledger.createEvent(item[0], item[1], item[2]);
+  await render();
+}
+
+async function injectInvalidEvent() {
+  await ledger.injectInvalidEvent();
+  await render();
+}
+
+async function replayFromInput() {
+  const from = Number(document.getElementById("replayFrom").value || 0);
+  const result = await ledger.replayFrom(from);
+  document.getElementById("replayState").textContent = JSON.stringify(result, null, 2);
+}
+
+async function createSnapshotFromUi() {
+  await ledger.createSnapshot();
+  await render();
+}
+
+function exportLedger() {
+  const json = JSON.stringify(ledger.exportLedger(), null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "jsonflow-ledger-height-" + ledger.orderedEvents().length + ".json";
+  link.click();
+  URL.revokeObjectURL(url);
+  log("sync", "Exported signed canonical event ledger.");
+  render();
+}
+
+async function resetSystem() {
+  await ledger.init();
+  log("sync", "System reset to a new signed genesis.");
+  await render();
+}
+
+function switchTab(tabName) {
+  document.querySelectorAll(".tab-content").forEach((node) => node.classList.toggle("active", node.id === tabName));
+  document.querySelectorAll(".tab-button").forEach((node) => node.classList.toggle("active", node.dataset.tab === tabName));
+}
+
+async function render() {
+  const peers = [...ledger.peers.values()];
+  const events = ledger.orderedEvents();
+  const converged = ledger.converged();
+  const root = peers[0]?.stateRoot ?? "-";
+  const merkle = peers[0]?.merkleRoot ?? "-";
+  const receiptTotal = peers.reduce((sum, peer) => sum + peer.receipts.length, 0);
+  const distribution = peers.length ? Math.round(peers.filter((peer) => peer.events.size === events.length).length / peers.length * 100) : 0;
+
+  setText("totalEvents", String(events.length));
+  setText("syncPercentage", distribution + "%");
+  setText("convergenceStatus", converged ? "YES" : "NO");
+  setText("chainDepth", String(events.at(-1)?.lamport ?? 0));
+  setText("merkleMetric", merkle === "-" ? "-" : merkle.slice(0, 10));
+  setText("receiptCount", String(receiptTotal));
+  setText("snapshotCount", String(ledger.snapshots.length));
+  setText("rejectedCount", String(rejectedAttacks));
+
+  renderPeers(peers, events.length);
+  renderConvergence(converged, root, merkle);
+  renderLog();
+  setText("stateView", JSON.stringify(Object.fromEntries(peers.map((peer) => [peer.id, peer.state])), null, 2));
+  setText("stateRoot", "stateRoot=" + root + "\nmerkleRoot=" + merkle + "\nbalanceSegmentRoot=" + (peers[0]?.segmentRoot ?? "-"));
+  setText("proofView", JSON.stringify(peers[0]?.receipts.slice(-5).reverse() ?? [], null, 2));
+  setText("snapshotView", JSON.stringify(ledger.snapshots.at(-1) ?? { status: "no snapshot" }, null, 2));
+}
+
+function renderPeers(peers, globalEventCount) {
+  const container = document.getElementById("peerStatus");
+  container.replaceChildren();
+  for (const peer of peers) {
+    const card = document.createElement("article");
+    card.className = "peer-card";
+    const title = document.createElement("div");
+    title.className = "peer-title";
+    const name = document.createElement("span");
+    name.textContent = peer.id;
+    const dot = document.createElement("span");
+    dot.className = "dot" + (peer.stateRoot ? "" : " bad");
+    title.append(name, dot);
+    card.append(title);
+    addKv(card, "events", String(peer.events.size) + "/" + globalEventCount);
+    addKv(card, "alice", String(peer.state.balances.alice));
+    addKv(card, "bob", String(peer.state.balances.bob));
+    addKv(card, "charlie", String(peer.state.balances.charlie));
+    addKv(card, "state root", peer.stateRoot ? peer.stateRoot.slice(0, 16) : "-");
+    addKv(card, "merkle", peer.merkleRoot ? peer.merkleRoot.slice(0, 16) : "-");
+    container.append(card);
+  }
+}
+
+function addKv(parent, label, value) {
+  const row = document.createElement("div");
+  row.className = "kv";
+  const left = document.createElement("span");
+  left.textContent = label;
+  const right = document.createElement("strong");
+  right.textContent = value;
+  row.append(left, right);
+  parent.append(row);
+}
+
+function renderConvergence(converged, root, merkle) {
+  const node = document.getElementById("convergenceIndicator");
+  node.className = "convergence" + (converged ? "" : " bad");
+  node.textContent = converged
+    ? "All replicas converged. State root " + root.slice(0, 18) + " and Merkle root " + merkle.slice(0, 18) + " match across peers."
+    : "Convergence failed or pending. At least one replica has a different commitment.";
+}
+
+function renderLog() {
+  const container = document.getElementById("eventLog");
+  container.replaceChildren();
+  if (appLog.length === 0) {
+    const empty = document.createElement("div");
+    empty.textContent = "No log entries.";
+    container.append(empty);
+    return;
+  }
+  for (const entry of appLog) {
+    const row = document.createElement("div");
+    row.className = "log-row " + entry.type;
+    const seq = document.createElement("small");
+    seq.textContent = "step " + String(entry.seq).padStart(3, "0");
+    const msg = document.createElement("strong");
+    msg.textContent = "[" + entry.type.toUpperCase() + "] " + entry.message;
+    row.append(seq, msg);
+    container.append(row);
+  }
+}
+
+function setText(id, value) {
+  document.getElementById(id).textContent = value;
+}
+
+document.getElementById("broadcastBtn").addEventListener("click", createEventFromForm);
+document.getElementById("scenarioBtn").addEventListener("click", runScenario);
+document.getElementById("attackBtn").addEventListener("click", injectInvalidEvent);
+document.getElementById("replayBtn").addEventListener("click", replayFromInput);
+document.getElementById("snapshotBtn").addEventListener("click", createSnapshotFromUi);
+document.getElementById("exportBtn").addEventListener("click", exportLedger);
+document.getElementById("resetBtn").addEventListener("click", resetSystem);
+document.querySelectorAll(".tab-button").forEach((button) => button.addEventListener("click", () => switchTab(button.dataset.tab)));
+document.getElementById("eventType").addEventListener("change", () => {
+  const type = document.getElementById("eventType").value;
+  const payloads = {
+    transfer: { from: "alice", to: "bob", amount: 100 },
+    set_value: { key: "statement", value: "State roots are consensus-ready evidence." },
+    increment: { counter: "converged_batches", by: 1 }
+  };
+  document.getElementById("eventPayload").value = JSON.stringify(payloads[type], null, 2);
+});
+
+ledger.init().then(render).catch((error) => {
+  log("error", String(error.message || error));
+  render();
+});
+</script>
 </body>
 </html>
+
