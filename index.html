@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -933,11 +932,11 @@
 
         <section class="hero">
             <div class="card hero-main">
-                <div class="eyebrow">JC-Deterministic runtime · Proof-backed UI</div>
-                <h1>Proof that state transitions can scale.</h1>
+                <div class="eyebrow">JC-Deterministic runtime · Evidence-backed UI</div>
+                <h1>Deterministic state transitions, demonstrated on screen.</h1>
                 <p class="lede">
                     This page shows the build path directly: bare metal to runtime, runtime to screen, screen to evidence.
-                    If the idea works, you should be able to see it operating here, not just read about it elsewhere.
+                    It demonstrates the current system, evaluates the major claims, and points to the exact evidence behind each one.
                 </p>
                 <div class="actions">
                     <a class="btn primary" href="#app">Open the working UI</a>
@@ -953,7 +952,7 @@
                 <div class="panel" style="margin-top:18px;padding:16px">
                     <div class="tag">Live verdict</div>
                     <h3 style="margin-bottom:6px">The page auto-runs the claim lab</h3>
-                    <div class="mini">Open the evidence section or use the summary below to see pass/fail results for each claim as the page loads.</div>
+                    <div class="mini">Open the evidence section or use the summary below to see the current pass/fail status as the page loads.</div>
                     <div id="heroEvidenceSummary" class="muted-band" style="margin-top:12px">Awaiting auto-run.</div>
                 </div>
             </div>
@@ -1130,7 +1129,7 @@
         <section id="translation" class="section">
             <div class="section-head">
                 <h2>Remove trust intermediaries</h2>
-                <p>Show the waste directly: many representations on the left, one canonical artifact on the right.</p>
+                <p>Show the cost directly: many representations on the left, one canonical artifact on the right.</p>
             </div>
             <div class="compare">
                 <div class="compare-col">
@@ -1223,9 +1222,9 @@ Proof
             </div>
             <div class="panel" style="margin-top:14px">
                 <div class="console" style="margin:0">
-                    The stack did not disappear.
+                    The stack still exists.
 
-                    The translations disappeared.
+                    The translations are reduced.
                 </div>
             </div>
         </section>
@@ -1288,31 +1287,34 @@ Worker C: contracts/</pre>
         <section class="section" id="proof-claims">
             <div class="section-head">
                 <h2>Proof claims</h2>
-                    <p>Skeptic-facing summary: the model is presented as a deterministic compute substrate, not just a chain or an illustrative ledger.</p>
+                    <p>Skeptic-facing summary: the page provides evidence for a deterministic compute substrate, while keeping formal claims and implemented demos clearly separated.</p>
             </div>
             <div class="proof-grid">
                 <div class="proof-card">
-                    <h3>Optimal model</h3>
+                    <h3>Current model result</h3>
+                    <div class="tag">IMPLEMENTED</div>
                     <pre>Complexity ≈ representations × translations
 
-Canonical replay collapses both terms.
+Canonical replay reduces both terms.
 One state model.
-One proof model.
+One witness model.
 One replay path.</pre>
                 </div>
                 <div class="proof-card">
                     <h3>Hardware efficiency</h3>
+                    <div class="tag">BENCHMARKED</div>
                     <pre>CPU → same replay
 GPU → same replay
 Edge → same replay
 Mobile → same replay
 Server → same replay
 
-No special hardware required
-to verify the same history.</pre>
+Measured on the browser paths
+in this demo.</pre>
                 </div>
                 <div class="proof-card">
-                    <h3>Industry adoption</h3>
+                    <h3>Application coverage</h3>
+                    <div class="tag">TESTED</div>
                     <pre>Apps
 Data
 Messaging
@@ -1321,31 +1323,33 @@ Recovery
 Contracts
 Distributed compute
 
-Drop-in fit for existing systems.</pre>
+Coverage shown across the app surface.</pre>
                 </div>
                 <div class="proof-card">
-                    <h3>Byzantine tolerance</h3>
+                    <h3>Byzantine scenario testing</h3>
+                    <div class="tag">TESTED</div>
                     <pre>Malicious node
 changes result
 
 Replay rejects
 proof diverges
 
-Truth is recomputed,
-not negotiated.</pre>
+Tampering is detected in the evidence lab.</pre>
                 </div>
                 <div class="proof-card">
-                    <h3>Planetary convergence</h3>
+                    <h3>Distributed convergence</h3>
+                    <div class="tag">BENCHMARKED</div>
                     <pre>Region A → replay → S
 Region B → replay → S
 Region C → replay → S
 
 Same history
-Same proof
+Same witness
 Same final hash</pre>
                 </div>
                 <div class="proof-card">
-                    <h3>What this replaces</h3>
+                    <h3>What this reduces</h3>
+                    <div class="tag">FORMALIZING</div>
                     <pre>API trust
 Database trust
 Queue trust
@@ -1353,7 +1357,7 @@ Audit trust
 Validator trust
 Replica trust
 
-Replaced by:
+Reduced by:
 deterministic replay
 canonical reduction
 independent verification</pre>
@@ -1364,11 +1368,12 @@ independent verification</pre>
         <section class="section" id="universal-proof">
             <div class="section-head">
                 <h2>Universal proof surface</h2>
-                <p>This section makes the core thesis explicit: one model can generalize across domains, scale across the planet, and displace consensus-driven coordination with deterministic verification.</p>
+                <p>This section makes the core thesis explicit: one model can be evaluated across domains, scale tests, and verification paths. It provides evidence for generality without claiming final victory.</p>
             </div>
             <div class="proof-grid">
                 <div class="proof-card">
-                    <h3>Universal applicability</h3>
+                    <h3>General applicability</h3>
+                    <div class="tag">FORMALIZING</div>
                     <pre>Domain A: apps
 Domain B: data
 Domain C: contracts
@@ -1379,11 +1384,12 @@ Domain F: distributed compute
 Same primitive:
 State → Transition → Proof</pre>
                     <div class="muted-band" style="margin-top:12px">
-                        If the primitive is domain-neutral, the proof surface is reusable everywhere the state machine applies.
+                        If the primitive is domain-neutral, the same demo pattern can be reused wherever the state machine applies.
                     </div>
                 </div>
                 <div class="proof-card">
-                    <h3>Planetary scalability</h3>
+                    <h3>Scale evidence</h3>
+                    <div class="tag">BENCHMARKED</div>
                     <pre>Region 1 → replay → S
 Region 2 → replay → S
 Region 3 → replay → S
@@ -1394,24 +1400,25 @@ not with trust negotiations.
 
 Local verification, global agreement.</pre>
                     <div class="muted-band" style="margin-top:12px">
-                        Scale comes from replaying the same canonical history anywhere, not from synchronizing subjective beliefs.
+                        The scale sweep gives visible evidence for convergence across simulated node counts.
                     </div>
                 </div>
                 <div class="proof-card">
-                    <h3>Consensus replacement</h3>
+                    <h3>Consensus comparison</h3>
+                    <div class="tag">THEORETICAL</div>
                     <pre>Consensus asks:
 who agrees?
 
 Convergence asks:
 what does the proof compute?
 
-Replacement stack:
+Comparison stack:
 trust → consensus → convergence
 
-Final authority:
-deterministic mathematics</pre>
+Current claim:
+deterministic verification is the center of gravity.</pre>
                     <div class="muted-band" style="margin-top:12px">
-                        The system does not ask nodes to negotiate truth; it recomputes truth directly.
+                        This is framed as a research direction and evidence-backed comparison, not a final replacement claim.
                     </div>
                 </div>
             </div>
@@ -1420,14 +1427,14 @@ deterministic mathematics</pre>
                 <h3>Why the thesis holds together</h3>
                 <div class="grid cols-2" style="margin-top:12px">
                     <div class="console">
-                        1. A single transition primitive works across multiple application classes.
-                        2. The same history replays identically on any node, anywhere.
-                        3. Verification is independent of social agreement.
+                        1. A single transition primitive is implemented across multiple application classes.
+                        2. The same history replays consistently on the browser-executed paths.
+                        3. Verification is independent of local display state.
                     </div>
                     <div class="console">
                         4. Therefore the model is not tied to one product or locality.
-                        5. Therefore planetary replicas can converge on the same result.
-                        6. Therefore consensus becomes an implementation detail, not a source of truth.
+                        5. Therefore the demo can show convergence across simulated replicas.
+                        6. Therefore the page provides evidence for a replay-centered design.
                     </div>
                 </div>
             </div>
@@ -1441,6 +1448,7 @@ deterministic mathematics</pre>
             <div class="proof-grid">
                 <div class="proof-card">
                     <h3>Lemma</h3>
+                    <div class="tag">FORMALIZING</div>
                     <pre>Deterministic replay
 defines truth.</pre>
                     <div class="muted-band" style="margin-top:12px">Theorem</div>
@@ -1453,6 +1461,7 @@ canonical hash from history.</pre>
                 </div>
                 <div class="proof-card">
                     <h3>Lemma</h3>
+                    <div class="tag">TESTED</div>
                     <pre>Independent replicas
 converge.</pre>
                     <div class="muted-band" style="margin-top:12px">Theorem</div>
@@ -1465,6 +1474,7 @@ Node B, and Node C.</pre>
                 </div>
                 <div class="proof-card">
                     <h3>Lemma</h3>
+                    <div class="tag">TESTED</div>
                     <pre>Invalid transitions
 are rejected.</pre>
                     <div class="muted-band" style="margin-top:12px">Theorem</div>
@@ -1486,6 +1496,7 @@ the witness hash on commit.</pre>
             <div class="proof-grid">
                 <div class="proof-card">
                     <h3>Unique State Evolution</h3>
+                    <div class="tag">FORMALIZING</div>
                     <pre>Given identical genesis G
 and identical valid history H,
 all honest observers compute one state S.
@@ -1498,6 +1509,7 @@ for every honest node.</pre>
                 </div>
                 <div class="proof-card">
                     <h3>Canonical Encoding</h3>
+                    <div class="tag">FORMALIZING</div>
                     <pre>Encode(x) = Encode(y)  iff  x = y
 
 No collisions.
@@ -1509,6 +1521,7 @@ No alternate canonical form.</pre>
                 </div>
                 <div class="proof-card">
                     <h3>Witness Soundness and Completeness</h3>
+                    <div class="tag">FORMALIZING</div>
                     <pre>Soundness:
 invalid transition → no valid witness
 
@@ -1520,6 +1533,7 @@ valid transition → valid witness</pre>
                 </div>
                 <div class="proof-card">
                     <h3>Byzantine Adversary Model</h3>
+                    <div class="tag">THEORETICAL</div>
                     <pre>Adversary may:
 forge messages
 reorder delivery
@@ -1536,6 +1550,7 @@ corruption is detected or rejected.</pre>
                 </div>
                 <div class="proof-card">
                     <h3>History Immutability</h3>
+                    <div class="tag">FORMALIZING</div>
                     <pre>Modify(H) ⇒ witness failure
 
 Any undetected rewrite would violate
@@ -1547,6 +1562,7 @@ or canonical replay equality.</pre>
                 </div>
                 <div class="proof-card">
                     <h3>Closure Under Valid Transitions</h3>
+                    <div class="tag">FORMALIZING</div>
                     <pre>Valid State + Valid Transition = Valid State
 
 Invalid Transition → detectable rejection
@@ -1596,6 +1612,7 @@ System validity is preserved inductively.</pre>
             <div class="proof-grid">
                 <div class="proof-card">
                     <h3>1-4. Core semantics</h3>
+                    <div class="tag">FORMALIZING</div>
                     <pre>1. Deterministic convergence
 2. Canonical representation
 3. Byzantine resistance
@@ -1606,6 +1623,7 @@ System validity is preserved inductively.</pre>
                 </div>
                 <div class="proof-card">
                     <h3>5-8. Safety and cost</h3>
+                    <div class="tag">TESTED</div>
                     <pre>5. Witness validity
 6. Fault recovery
 7. Consensus reduction
@@ -1616,6 +1634,7 @@ System validity is preserved inductively.</pre>
                 </div>
                 <div class="proof-card">
                     <h3>9-12. Scale and immutability</h3>
+                    <div class="tag">BENCHMARKED</div>
                     <pre>9. Scalability
 10. State transition closure
 11. State transition containment
@@ -1626,6 +1645,7 @@ System validity is preserved inductively.</pre>
                 </div>
                 <div class="proof-card">
                     <h3>13-15. Generality</h3>
+                    <div class="tag">THEORETICAL</div>
                     <pre>13. AI verifiability
 14. Trust minimization
 15. Universal compute model</pre>
